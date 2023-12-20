@@ -2,6 +2,7 @@ const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler');
 const { body, validationResult } = require('express-validator');
+const issueJWT = require('../lib/utils').issueJWT;
 
 exports.createAccountPost = [
   body('username', 'username must contain at least 4 characters')
@@ -43,10 +44,14 @@ exports.createAccountPost = [
             password: hashedPassword
           });
 
-          await user.save();
+          const createdUser = await user.save();
+          const jwt = issueJWT(createdUser);
           res.json({
             msg: 'account created',
-            success: true
+            success: true,
+            user: createdUser,
+            token: jwt.token,
+            expiresIn: jwt.expires
           });
         } catch (err) {
           return next(err);
@@ -55,3 +60,26 @@ exports.createAccountPost = [
     }
   })
 ];
+
+exports.loginPost = asyncHandler(async (req, res, next) => {
+  try {
+    const user = await User.findOne({ username: req.body.username });
+
+    if (!user) {
+      res.status(401);
+      res.json({ success: false, msg: 'wrong username or password' });
+    }
+
+    const match = await bcrypt.compare(req.body.password, user.password);
+    if (!match) {
+      res.status(401);
+      res.json({ success: false, msg: 'wrong username or password' });
+    }
+
+    const jwt = issueJWT(user);
+    res.status(200);
+    res.json({ success: true, user, token: jwt.token, expiresIn: jwt.expires });
+  } catch (err) {
+    return next(err);
+  }
+});
