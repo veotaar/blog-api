@@ -22,4 +22,9 @@ app.use(helmet());
 
 app.use('/', indexRouter);
 
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something went wrong!');
+});
+
 app.listen(process.env.PORT);

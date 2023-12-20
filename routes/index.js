@@ -18,5 +18,6 @@ router.post('/users', userController.createAccountPost);
 router.post('/login', userController.loginPost);
 
 router.post('/posts', passport.authenticate('jwt', { session: false }), articleController.createArticlePost);
+router.get('/posts/:articleid', articleController.readArticleGet);
 
 module.exports = router;

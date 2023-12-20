@@ -2,6 +2,7 @@ const Article = require('../models/article');
 const asyncHandler = require('express-async-handler');
 const { body, validationResult } = require('express-validator');
 const jwtDecode = require('jwt-decode').jwtDecode;
+const mongoose = require('mongoose');
 
 exports.createArticlePost = [
   body('title', 'title must contain at least 2 characters')
@@ -53,3 +54,19 @@ exports.createArticlePost = [
     }
   })
 ];
+
+exports.readArticleGet = asyncHandler(async (req, res, next) => {
+  const articleId = req.params.articleid;
+
+  if (!mongoose.isValidObjectId(articleId)) {
+    res.sendStatus(404);
+  }
+
+  const article = await Article.findById(articleId).populate('author', 'username').exec();
+
+  if (article) {
+    res.json(article);
+  } else {
+    res.sendStatus(404);
+  }
+});
