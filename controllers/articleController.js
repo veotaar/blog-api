@@ -60,6 +60,7 @@ exports.readArticleGet = asyncHandler(async (req, res, next) => {
 
   if (!mongoose.isValidObjectId(articleId)) {
     res.sendStatus(404);
+    return;
   }
 
   const article = await Article.findById(articleId).populate('author', 'username').exec();
@@ -70,3 +71,59 @@ exports.readArticleGet = asyncHandler(async (req, res, next) => {
     res.sendStatus(404);
   }
 });
+
+exports.updateArticlePut = [
+  body('title', 'title must contain at least 2 characters')
+    .trim()
+    .isLength({ min: 2, max: 120 })
+    .escape(),
+
+  body('content', 'content must contain at least 2 characters')
+    .trim()
+    .isLength({ min: 2, max: 10000 })
+    .escape(),
+
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+    const articleId = req.params.articleid;
+    const token = req.headers.authorization.split(' ')[1];
+    const { sub } = jwtDecode(token);
+
+    if (!errors.isEmpty()) {
+      res.status(400);
+      res.json({
+        success: false,
+        error: errors.array().map(value => value.msg)
+      });
+      return;
+    }
+
+    if (!mongoose.isValidObjectId(articleId)) {
+      res.sendStatus(404);
+      return;
+    }
+
+    const article = await Article.findById(articleId).populate('author', 'username').exec();
+    console.log(article);
+    console.log(sub);
+
+    if (!sub || !article.author._id.equals(sub)) {
+      res.status(403);
+      res.json({
+        success: false,
+        error: 'Unauthorized'
+      });
+      return;
+    }
+
+    article.title = req.body.title;
+    article.content = req.body.content;
+
+    const editedArticle = await article.save();
+    res.json({
+      success: true,
+      msg: 'article edited',
+      articleId: editedArticle._id
+    });
+  })
+];
