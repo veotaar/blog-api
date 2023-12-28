@@ -83,6 +83,11 @@ exports.updateArticlePut = [
     .isLength({ min: 2, max: 10000 })
     .escape(),
 
+  body('hidden', 'must be a boolean')
+    .trim()
+    .isBoolean()
+    .escape(),
+
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
     const articleId = req.params.articleid;
@@ -104,8 +109,6 @@ exports.updateArticlePut = [
     }
 
     const article = await Article.findById(articleId).populate('author', 'username').exec();
-    console.log(article);
-    console.log(sub);
 
     if (!sub || !article.author._id.equals(sub)) {
       res.status(403);
@@ -118,6 +121,7 @@ exports.updateArticlePut = [
 
     article.title = req.body.title;
     article.content = req.body.content;
+    article.hidden = req.body.hidden;
 
     const editedArticle = await article.save();
     res.json({
@@ -127,3 +131,33 @@ exports.updateArticlePut = [
     });
   })
 ];
+
+exports.deleteArticle = asyncHandler(async (req, res, next) => {
+  const articleId = req.params.articleid;
+  const token = req.headers.authorization.split(' ')[1];
+  const { sub } = jwtDecode(token);
+
+  if (!mongoose.isValidObjectId(articleId)) {
+    res.sendStatus(404);
+    return;
+  }
+
+  const article = await Article.findById(articleId).populate('author', 'username').exec();
+
+  if (!sub || !article.author._id.equals(sub)) {
+    res.status(403);
+    res.json({
+      success: false,
+      error: 'Unauthorized'
+    });
+    return;
+  }
+
+  const result = await article.deleteOne();
+
+  res.json({
+    success: true,
+    msg: 'article deleted',
+    deletedCount: result.deletedCount
+  });
+});

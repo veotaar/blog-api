@@ -20,5 +20,6 @@ router.post('/login', userController.loginPost);
 router.post('/posts', passport.authenticate('jwt', { session: false }), articleController.createArticlePost);
 router.get('/posts/:articleid', articleController.readArticleGet);
 router.put('/posts/:articleid', passport.authenticate('jwt', { session: false }), articleController.updateArticlePut);
+router.delete('/posts/:articleid', passport.authenticate('jwt', { session: false }), articleController.deleteArticle);
 
 module.exports = router;
