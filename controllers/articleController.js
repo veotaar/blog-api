@@ -109,6 +109,10 @@ exports.updateArticlePut = [
     }
 
     const article = await Article.findById(articleId).populate('author', 'username').exec();
+    if (!article) {
+      res.sendStatus(404);
+      return;
+    }
 
     if (!sub || !article.author._id.equals(sub)) {
       res.status(403);
@@ -143,6 +147,11 @@ exports.deleteArticle = asyncHandler(async (req, res, next) => {
   }
 
   const article = await Article.findById(articleId).populate('author', 'username').exec();
+
+  if (!article) {
+    res.sendStatus(404);
+    return;
+  }
 
   if (!sub || !article.author._id.equals(sub)) {
     res.status(403);
