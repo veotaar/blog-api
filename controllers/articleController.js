@@ -63,7 +63,7 @@ exports.readArticleGet = asyncHandler(async (req, res, next) => {
     return;
   }
 
-  const article = await Article.findById(articleId).populate('author', 'username').exec();
+  const article = await Article.findById(articleId).populate('author', 'username').populate('comments').exec();
 
   if (article) {
     res.json(article);
