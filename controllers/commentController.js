@@ -33,6 +33,7 @@ exports.createCommentPost = [
     }
 
     const comment = new Comment({
+      parent: articleid,
       author: req.body.author,
       content: req.body.content
     });
