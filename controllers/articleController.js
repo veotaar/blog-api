@@ -1,4 +1,5 @@
 const Article = require('../models/article');
+const Comment = require('../models/comment');
 const asyncHandler = require('express-async-handler');
 const { body, validationResult } = require('express-validator');
 const jwtDecode = require('jwt-decode').jwtDecode;
@@ -160,6 +161,11 @@ exports.deleteArticle = asyncHandler(async (req, res, next) => {
       error: 'Unauthorized'
     });
     return;
+  }
+
+  // delete comments
+  if (article.comments.length > 0) {
+    await Comment.deleteMany({ _id: { $in: article.comments } });
   }
 
   const result = await article.deleteOne();
