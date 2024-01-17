@@ -24,4 +24,5 @@ router.put('/posts/:articleid', passport.authenticate('jwt', { session: false })
 router.delete('/posts/:articleid', passport.authenticate('jwt', { session: false }), articleController.deleteArticle);
 
 router.post('/posts/:articleid/comments', commentController.createCommentPost);
+router.get('/posts/:articleid/comments', commentController.listCommentsGet);
 module.exports = router;

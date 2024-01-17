@@ -49,3 +49,14 @@ exports.createCommentPost = [
     });
   })
 ];
+
+exports.listCommentsGet = asyncHandler(async (req, res, next) => {
+  const articleid = req.params.articleid;
+  const comments = await Article.findById(articleid).select('comments').populate('comments');
+
+  if (comments.comments.length <= 0) {
+    res.sendStatus(404);
+  }
+
+  res.json(comments.comments);
+});
