@@ -16,61 +16,55 @@ exports.createArticlePost = [
     .isLength({ min: 2, max: 10000 })
     .escape(),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     const token = req.headers.authorization.split(' ')[1];
     const { sub } = jwtDecode(token);
 
     if (!errors.isEmpty()) {
       res.status(400);
-      res.json({
+      return res.json({
         success: false,
         error: errors.array().map(value => value.msg)
       });
-    } else if (!sub) {
+    }
+
+    if (!sub) {
       res.status(403);
-      res.json({
+      return res.json({
         success: false,
         error: 'Unauthorized'
       });
-    } else {
-      try {
-        // get the userId for the author field from the jsonwebtoken
-        // this will be a protected route, jwt is already verified
-        const article = new Article({
-          author: sub,
-          title: req.body.title,
-          content: req.body.content
-        });
-
-        const createdArticle = await article.save();
-        res.json({
-          success: true,
-          msg: 'article created',
-          articleId: createdArticle._id
-        });
-      } catch (err) {
-        return next(err);
-      }
     }
+
+    // get the userId for the author field from the jsonwebtoken
+    // this is a protected route, jwt is already verified
+    const article = new Article({
+      author: sub,
+      title: req.body.title,
+      content: req.body.content
+    });
+
+    const createdArticle = await article.save();
+
+    return res.json({
+      success: true,
+      msg: 'article created',
+      articleId: createdArticle._id
+    });
   })
 ];
 
 exports.readArticleGet = asyncHandler(async (req, res, next) => {
   const articleId = req.params.articleid;
 
-  if (!mongoose.isValidObjectId(articleId)) {
-    res.sendStatus(404);
-    return;
-  }
+  if (!mongoose.isValidObjectId(articleId)) return res.sendStatus(404);
 
   const article = await Article.findById(articleId).populate('author', 'username').populate('comments').exec();
 
-  if (article) {
-    res.json(article);
-  } else {
-    res.sendStatus(404);
-  }
+  if (!article) return res.sendStatus(404);
+
+  return res.json(article);
 });
 
 exports.updateArticlePut = [
@@ -89,7 +83,7 @@ exports.updateArticlePut = [
     .isBoolean()
     .escape(),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     const articleId = req.params.articleid;
     const token = req.headers.authorization.split(' ')[1];
@@ -97,31 +91,23 @@ exports.updateArticlePut = [
 
     if (!errors.isEmpty()) {
       res.status(400);
-      res.json({
+      return res.json({
         success: false,
         error: errors.array().map(value => value.msg)
       });
-      return;
     }
 
-    if (!mongoose.isValidObjectId(articleId)) {
-      res.sendStatus(404);
-      return;
-    }
+    if (!mongoose.isValidObjectId(articleId)) return res.sendStatus(404);
 
     const article = await Article.findById(articleId).populate('author', 'username').exec();
-    if (!article) {
-      res.sendStatus(404);
-      return;
-    }
+    if (!article) return res.sendStatus(404);
 
     if (!sub || !article.author._id.equals(sub)) {
       res.status(403);
-      res.json({
+      return res.json({
         success: false,
         error: 'Unauthorized'
       });
-      return;
     }
 
     article.title = req.body.title;
@@ -129,7 +115,8 @@ exports.updateArticlePut = [
     article.hidden = req.body.hidden;
 
     const editedArticle = await article.save();
-    res.json({
+
+    return res.json({
       success: true,
       msg: 'article edited',
       articleId: editedArticle._id
@@ -137,30 +124,23 @@ exports.updateArticlePut = [
   })
 ];
 
-exports.deleteArticle = asyncHandler(async (req, res, next) => {
+exports.deleteArticle = asyncHandler(async (req, res) => {
   const articleId = req.params.articleid;
   const token = req.headers.authorization.split(' ')[1];
   const { sub } = jwtDecode(token);
 
-  if (!mongoose.isValidObjectId(articleId)) {
-    res.sendStatus(404);
-    return;
-  }
+  if (!mongoose.isValidObjectId(articleId)) return res.sendStatus(404);
 
   const article = await Article.findById(articleId).populate('author', 'username').exec();
 
-  if (!article) {
-    res.sendStatus(404);
-    return;
-  }
+  if (!article) return res.sendStatus(404);
 
   if (!sub || !article.author._id.equals(sub)) {
     res.status(403);
-    res.json({
+    return res.json({
       success: false,
       error: 'Unauthorized'
     });
-    return;
   }
 
   // delete comments
@@ -170,7 +150,7 @@ exports.deleteArticle = asyncHandler(async (req, res, next) => {
 
   const result = await article.deleteOne();
 
-  res.json({
+  return res.json({
     success: true,
     msg: 'article deleted',
     deletedCount: result.deletedCount
@@ -180,10 +160,11 @@ exports.deleteArticle = asyncHandler(async (req, res, next) => {
 exports.listArticlesGet = asyncHandler(async (req, res) => {
   const itemsPerPage = 9;
   const page = req.query.page || 1;
-
   const skip = (page - 1) * itemsPerPage;
-  const countPromise = Article.estimatedDocumentCount({});
-  const articlesPromise = Article.find({}).sort('-createdAt').limit(itemsPerPage).skip(skip);
+  const query = { hidden: false };
+
+  const countPromise = Article.estimatedDocumentCount(query);
+  const articlesPromise = Article.find(query).sort('-createdAt').limit(itemsPerPage).skip(skip).populate('author', 'username').select('-content -comments');
 
   const [count, articles] = await Promise.all([countPromise, articlesPromise]);
 

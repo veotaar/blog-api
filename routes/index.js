@@ -15,17 +15,20 @@ router.get('/', (req, res) => {
   res.json({ msg: 'oldu mu' });
 });
 
+// auth
 router.post('/users', userController.createAccountPost);
 router.post('/login', userController.loginPost);
 
-router.post('/posts', passport.authenticate('jwt', { session: false }), articleController.createArticlePost);
+// articles
 router.get('/posts', articleController.listArticlesGet);
 router.get('/posts/:articleid', articleController.readArticleGet);
+router.post('/posts', passport.authenticate('jwt', { session: false }), articleController.createArticlePost);
 router.put('/posts/:articleid', passport.authenticate('jwt', { session: false }), articleController.updateArticlePut);
 router.delete('/posts/:articleid', passport.authenticate('jwt', { session: false }), articleController.deleteArticle);
 
-router.post('/posts/:articleid/comments', commentController.createCommentPost);
+// comments
 router.get('/posts/:articleid/comments', commentController.listCommentsGet);
+router.post('/posts/:articleid/comments', commentController.createCommentPost);
 router.delete('/comments/:commentid', passport.authenticate('jwt', { session: false }), commentController.deleteComment);
 
 module.exports = router;

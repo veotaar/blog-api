@@ -14,12 +14,12 @@ exports.createCommentPost = [
     .isLength({ min: 2, max: 255 })
     .escape(),
 
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req, res) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       res.status(400);
-      res.json({
+      return res.json({
         success: false,
         error: errors.array().map(value => value.msg)
       });
@@ -28,9 +28,7 @@ exports.createCommentPost = [
     const articleid = req.params.articleid;
     const article = await Article.findById(articleid);
 
-    if (!article) {
-      res.sendStatus(404);
-    }
+    if (!article) return res.sendStatus(404);
 
     const comment = new Comment({
       parent: articleid,
@@ -43,31 +41,27 @@ exports.createCommentPost = [
     article.comments.push(createdComment._id);
     await article.save();
 
-    res.json({
+    return res.json({
       success: true,
       msg: 'comment created'
     });
   })
 ];
 
-exports.listCommentsGet = asyncHandler(async (req, res, next) => {
+exports.listCommentsGet = asyncHandler(async (req, res) => {
   const articleid = req.params.articleid;
   const comments = await Article.findById(articleid).select('comments').populate('comments');
 
-  if (comments.comments.length <= 0) {
-    res.sendStatus(404);
-  }
+  if (comments.comments.length <= 0) return res.sendStatus(404);
 
-  res.json(comments.comments);
+  return res.json(comments.comments);
 });
 
-exports.deleteComment = asyncHandler(async (req, res, next) => {
+exports.deleteComment = asyncHandler(async (req, res) => {
   const commentid = req.params.commentid;
   const comment = await Comment.findById(commentid).exec();
 
-  if (!comment) {
-    res.sendStatus(404);
-  }
+  if (!comment) return res.sendStatus(404);
 
   const article = await Article.findById(comment.parent).exec();
   article.comments.pull(commentid);
@@ -77,7 +71,7 @@ exports.deleteComment = asyncHandler(async (req, res, next) => {
     comment.deleteOne()
   ]);
 
-  res.json({
+  return res.json({
     success: true,
     msg: 'comment deleted'
   });
