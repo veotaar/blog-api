@@ -176,3 +176,24 @@ exports.deleteArticle = asyncHandler(async (req, res, next) => {
     deletedCount: result.deletedCount
   });
 });
+
+exports.listArticlesGet = asyncHandler(async (req, res) => {
+  const itemsPerPage = 9;
+  const page = req.query.page || 1;
+
+  const skip = (page - 1) * itemsPerPage;
+  const countPromise = Article.estimatedDocumentCount({});
+  const articlesPromise = Article.find({}).sort('-createdAt').limit(itemsPerPage).skip(skip);
+
+  const [count, articles] = await Promise.all([countPromise, articlesPromise]);
+
+  const pageCount = Math.ceil(count / itemsPerPage);
+
+  return res.json({
+    pagination: {
+      count,
+      pageCount
+    },
+    articles
+  });
+});
