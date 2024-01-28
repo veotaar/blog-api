@@ -39,6 +39,7 @@ exports.createCommentPost = [
     const createdComment = await comment.save();
 
     article.comments.push(createdComment._id);
+    article.$inc('commentCount', 1);
     await article.save();
 
     return res.json({
@@ -65,6 +66,7 @@ exports.deleteComment = asyncHandler(async (req, res) => {
 
   const article = await Article.findById(comment.parent).exec();
   article.comments.pull(commentid);
+  article.$inc('commentCount', -1);
 
   await Promise.all([
     article.save(),
