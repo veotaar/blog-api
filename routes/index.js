@@ -5,6 +5,7 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const articleController = require('../controllers/articleController');
 const commentController = require('../controllers/commentController');
+const restrictTo = require('../middleware/restrictTo');
 
 router.get('/protected', passport.authenticate('jwt', { session: false }), (req, res, next) => {
   res.status(200);
@@ -22,9 +23,9 @@ router.post('/login', userController.loginPost);
 // articles
 router.get('/posts', articleController.listArticlesGet);
 router.get('/posts/:articleid', articleController.readArticleGet);
-router.post('/posts', passport.authenticate('jwt', { session: false }), articleController.createArticlePost);
-router.put('/posts/:articleid', passport.authenticate('jwt', { session: false }), articleController.updateArticlePut);
-router.delete('/posts/:articleid', passport.authenticate('jwt', { session: false }), articleController.deleteArticle);
+router.post('/posts', passport.authenticate('jwt', { session: false }), restrictTo('admin'), articleController.createArticlePost);
+router.put('/posts/:articleid', passport.authenticate('jwt', { session: false }), restrictTo('admin'), articleController.updateArticlePut);
+router.delete('/posts/:articleid', passport.authenticate('jwt', { session: false }), restrictTo('admin'), articleController.deleteArticle);
 
 // comments
 router.get('/posts/:articleid/comments', commentController.listCommentsGet);

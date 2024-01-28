@@ -135,7 +135,7 @@ exports.deleteArticle = asyncHandler(async (req, res) => {
 
   if (!article) return res.sendStatus(404);
 
-  if (!sub || !article.author._id.equals(sub)) {
+  if (!sub) {
     res.status(403);
     return res.json({
       success: false,
@@ -161,7 +161,8 @@ exports.listArticlesGet = asyncHandler(async (req, res) => {
   const itemsPerPage = 9;
   const page = req.query.page || 1;
   const skip = (page - 1) * itemsPerPage;
-  const query = { hidden: false };
+  // const query = { hidden: false };
+  const query = {};
 
   const countPromise = Article.estimatedDocumentCount(query);
   const articlesPromise = Article.find(query).sort('-createdAt').limit(itemsPerPage).skip(skip).populate('author', 'username').select('-content -comments');
