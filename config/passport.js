@@ -14,7 +14,7 @@ const options = {
 };
 
 const strategy = new JwtStrategy(options, (payload, done) => {
-  User.findOne({ _id: payload.sub })
+  User.findOne({ _id: payload.sub }).select('-password')
     .then((user) => {
       if (user) {
         return done(null, user);

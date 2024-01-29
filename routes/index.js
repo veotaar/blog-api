@@ -22,6 +22,7 @@ router.post('/login', userController.loginPost);
 
 // articles
 router.get('/posts', articleController.listArticlesGet);
+router.get('/admin/posts', passport.authenticate('jwt', { session: false }), restrictTo('admin'), articleController.listAllArticles);
 router.get('/posts/:articleid', articleController.readArticleGet);
 router.post('/posts', passport.authenticate('jwt', { session: false }), restrictTo('admin'), articleController.createArticlePost);
 router.put('/posts/:articleid', passport.authenticate('jwt', { session: false }), restrictTo('admin'), articleController.updateArticlePut);

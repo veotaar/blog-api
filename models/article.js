@@ -8,7 +8,7 @@ const ArticleSchema = new Schema(
     content: { type: String, required: true },
     commentCount: { type: Number, default: 0 },
     comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
-    hidden: { type: Boolean, default: true }
+    published: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

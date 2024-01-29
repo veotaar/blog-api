@@ -2,7 +2,6 @@ const Article = require('../models/article');
 const Comment = require('../models/comment');
 const asyncHandler = require('express-async-handler');
 const { body, validationResult } = require('express-validator');
-const jwtDecode = require('jwt-decode').jwtDecode;
 const mongoose = require('mongoose');
 
 exports.createArticlePost = [
@@ -18,8 +17,6 @@ exports.createArticlePost = [
 
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
-    const token = req.headers.authorization.split(' ')[1];
-    const { sub } = jwtDecode(token);
 
     if (!errors.isEmpty()) {
       res.status(400);
@@ -29,18 +26,8 @@ exports.createArticlePost = [
       });
     }
 
-    if (!sub) {
-      res.status(403);
-      return res.json({
-        success: false,
-        error: 'Unauthorized'
-      });
-    }
-
-    // get the userId for the author field from the jsonwebtoken
-    // this is a protected route, jwt is already verified
     const article = new Article({
-      author: sub,
+      author: req.user._id.toString(),
       title: req.body.title,
       content: req.body.content
     });
@@ -60,9 +47,9 @@ exports.readArticleGet = asyncHandler(async (req, res, next) => {
 
   if (!mongoose.isValidObjectId(articleId)) return res.sendStatus(404);
 
-  const article = await Article.findById(articleId).populate('author', 'username').populate('comments').exec();
+  const article = await Article.findById(articleId).populate('author', 'username').populate('comments');
 
-  if (!article) return res.sendStatus(404);
+  if (!article || !article.published) return res.sendStatus(404);
 
   return res.json(article);
 });
@@ -78,7 +65,7 @@ exports.updateArticlePut = [
     .isLength({ min: 2, max: 10000 })
     .escape(),
 
-  body('hidden', 'must be a boolean')
+  body('published', 'must be a boolean')
     .trim()
     .isBoolean()
     .escape(),
@@ -86,8 +73,6 @@ exports.updateArticlePut = [
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     const articleId = req.params.articleid;
-    const token = req.headers.authorization.split(' ')[1];
-    const { sub } = jwtDecode(token);
 
     if (!errors.isEmpty()) {
       res.status(400);
@@ -102,17 +87,9 @@ exports.updateArticlePut = [
     const article = await Article.findById(articleId).populate('author', 'username').exec();
     if (!article) return res.sendStatus(404);
 
-    if (!sub || !article.author._id.equals(sub)) {
-      res.status(403);
-      return res.json({
-        success: false,
-        error: 'Unauthorized'
-      });
-    }
-
     article.title = req.body.title;
     article.content = req.body.content;
-    article.hidden = req.body.hidden;
+    article.published = req.body.published;
 
     const editedArticle = await article.save();
 
@@ -126,22 +103,12 @@ exports.updateArticlePut = [
 
 exports.deleteArticle = asyncHandler(async (req, res) => {
   const articleId = req.params.articleid;
-  const token = req.headers.authorization.split(' ')[1];
-  const { sub } = jwtDecode(token);
 
   if (!mongoose.isValidObjectId(articleId)) return res.sendStatus(404);
 
   const article = await Article.findById(articleId).populate('author', 'username').exec();
 
   if (!article) return res.sendStatus(404);
-
-  if (!sub) {
-    res.status(403);
-    return res.json({
-      success: false,
-      error: 'Unauthorized'
-    });
-  }
 
   // delete comments
   if (article.comments.length > 0) {
@@ -161,10 +128,32 @@ exports.listArticlesGet = asyncHandler(async (req, res) => {
   const itemsPerPage = 9;
   const page = req.query.page || 1;
   const skip = (page - 1) * itemsPerPage;
-  // const query = { hidden: false };
+  const query = { published: true };
+
+  const countPromise = Article.countDocuments(query);
+  const articlesPromise = Article.find(query).sort('-createdAt').limit(itemsPerPage).skip(skip).populate('author', 'username').select('-content -comments');
+
+  const [count, articles] = await Promise.all([countPromise, articlesPromise]);
+
+  const pageCount = Math.ceil(count / itemsPerPage);
+
+  return res.json({
+    pagination: {
+      count,
+      pageCount
+    },
+    articles
+  });
+});
+
+// TODO find a better solution later
+exports.listAllArticles = asyncHandler(async (req, res) => {
+  const itemsPerPage = 9;
+  const page = req.query.page || 1;
+  const skip = (page - 1) * itemsPerPage;
   const query = {};
 
-  const countPromise = Article.estimatedDocumentCount(query);
+  const countPromise = Article.countDocuments(query);
   const articlesPromise = Article.find(query).sort('-createdAt').limit(itemsPerPage).skip(skip).populate('author', 'username').select('-content -comments');
 
   const [count, articles] = await Promise.all([countPromise, articlesPromise]);
