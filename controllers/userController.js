@@ -23,13 +23,13 @@ exports.createAccountPost = [
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
+    const errorObject = Object.fromEntries(errors.array().map(e => [e.path, e.msg]));
 
     if (!errors.isEmpty()) {
       res.status(400);
       return res.json({
-        msg: 'there are errors',
-        success: false,
-        error: errors.array().map(value => value.msg)
+        status: 'fail',
+        data: errorObject
       });
     }
 
@@ -48,11 +48,18 @@ exports.createAccountPost = [
       const jwt = issueJWT(createdUser);
 
       return res.json({
-        msg: 'account created',
-        success: true,
-        user: createdUser,
-        token: jwt.token,
-        expiresIn: jwt.expires
+        status: 'success',
+        data: {
+          user: {
+            id: createdUser.id,
+            username: createdUser.username,
+            roles: createdUser.roles
+          },
+          jwt: {
+            token: jwt.token,
+            expires: jwt.expires
+          }
+        }
       });
     });
   })
@@ -62,17 +69,38 @@ exports.loginPost = asyncHandler(async (req, res, next) => {
   const user = await User.findOne({ username: req.body.username });
 
   if (!user) {
-    res.status(401);
-    return res.json({ success: false, msg: 'wrong username or password' });
+    return res.status(401).json({
+      status: 'fail',
+      data: {
+        message: 'wrong username or password'
+      }
+    });
   }
 
   const match = await bcrypt.compare(req.body.password, user.password);
   if (!match) {
-    res.status(401);
-    return res.json({ success: false, msg: 'wrong username or password' });
+    return res.status(401).json({
+      status: 'fail',
+      data: {
+        message: 'wrong username or password'
+      }
+    });
   }
 
   const jwt = issueJWT(user);
-  res.status(200);
-  return res.json({ success: true, user, token: jwt.token, expiresIn: jwt.expires });
+
+  return res.json({
+    status: 'success',
+    data: {
+      user: {
+        id: user.id,
+        username: user.username,
+        roles: user.roles
+      },
+      jwt: {
+        token: jwt.token,
+        expires: jwt.expires
+      }
+    }
+  });
 });

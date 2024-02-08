@@ -4,8 +4,15 @@ const passport = require('passport');
 const indexRouter = require('./routes/index');
 const helmet = require('helmet');
 const mongoose = require('mongoose');
+const mongoSanitize = require('express-mongo-sanitize');
 
 mongoose.connect(process.env.DB_STRING);
+mongoose.set('toJSON', {
+  virtuals: true,
+  transform: (doc, converted) => {
+    delete converted._id;
+  }
+});
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'mongodb connection error'));
@@ -19,12 +26,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors());
 app.use(helmet());
+app.use(mongoSanitize());
 
-app.use('/', indexRouter);
+app.use('/api', indexRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Something went wrong!');
+  return res.status(500).json({
+    status: 'error',
+    message: 'Internal server error'
+  });
 });
 
 app.listen(process.env.PORT);
