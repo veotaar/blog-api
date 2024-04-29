@@ -5,6 +5,7 @@ const indexRouter = require('./routes/index');
 const helmet = require('helmet');
 const mongoose = require('mongoose');
 const mongoSanitize = require('express-mongo-sanitize');
+// const cookieParser = require('cookie-parser');
 
 mongoose.connect(process.env.DB_STRING);
 mongoose.set('toJSON', {
@@ -27,6 +28,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cors());
 app.use(helmet());
 app.use(mongoSanitize());
+// app.use(cookieParser());
+
+// app.use((req, res, next) => {
+//   console.log(req.cookies);
+//   next();
+// });
 
 app.use('/api', indexRouter);
 

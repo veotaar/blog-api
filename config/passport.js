@@ -7,6 +7,18 @@ const ExtractJwt = require('passport-jwt').ExtractJwt;
 const pathToKey = path.join(__dirname, '..', 'id_rsa_pub.pem');
 const PUB_KEY = fs.readFileSync(pathToKey, 'utf8');
 
+// const extractJwtfromCookie = (req) => {
+//   let jwt = null;
+
+//   if (req && req.cookies) {
+//     jwt = req.cookies.access_token;
+//   }
+
+//   console.log(jwt);
+
+//   return jwt;
+// };
+
 const options = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: PUB_KEY,

@@ -7,13 +7,13 @@ const mongoose = require('mongoose');
 exports.createArticlePost = [
   body('title', 'title must contain at least 2 characters')
     .trim()
-    .isLength({ min: 2, max: 120 })
-    .escape(),
+    .isLength({ min: 2, max: 120 }),
+  // .escape(),
 
   body('content', 'content must contain at least 2 characters')
     .trim()
-    .isLength({ min: 2, max: 100000 })
-    .escape(),
+    .isLength({ min: 2, max: 100000 }),
+  // .escape(),
 
   body('published', 'must be a boolean')
     .trim()
@@ -40,14 +40,24 @@ exports.createArticlePost = [
     });
 
     const createdArticle = await article.save();
-    const { id } = createdArticle;
+    const { id, title, content, commentCount, comments, published, createdAt, updatedAt } = createdArticle;
 
     return res.status(201).json({
       status: 'success',
       data: {
         post: {
-          id,
-          path: `/posts/${id}`
+          author: {
+            username: req.user.username,
+            id: req.user._id.toString()
+          },
+          title,
+          content,
+          commentCount,
+          comments,
+          published,
+          createdAt,
+          updatedAt,
+          id
         }
       }
     });
@@ -85,16 +95,47 @@ exports.readArticleGet = asyncHandler(async (req, res, next) => {
   });
 });
 
+exports.readAnyArticleGet = asyncHandler(async (req, res, next) => {
+  const articleId = req.params.articleid;
+
+  if (!mongoose.isValidObjectId(articleId)) {
+    return res.status(404).json({
+      status: 'fail',
+      data: {
+        message: 'article not found'
+      }
+    });
+  }
+
+  const article = await Article.findById(articleId).populate('author', 'username').populate('comments');
+
+  if (!article) {
+    return res.status(404).json({
+      status: 'fail',
+      data: {
+        message: 'article not found'
+      }
+    });
+  }
+
+  return res.json({
+    status: 'success',
+    data: {
+      post: article
+    }
+  });
+});
+
 exports.updateArticlePut = [
   body('title', 'title must contain at least 2 characters')
     .trim()
-    .isLength({ min: 2, max: 120 })
-    .escape(),
+    .isLength({ min: 2, max: 120 }),
+  // .escape(),
 
   body('content', 'content must contain at least 2 characters')
     .trim()
-    .isLength({ min: 2, max: 10000 })
-    .escape(),
+    .isLength({ min: 2, max: 10000 }),
+  // .escape(),
 
   body('published', 'must be a boolean')
     .trim()
@@ -137,15 +178,11 @@ exports.updateArticlePut = [
     article.published = req.body.published;
 
     const editedArticle = await article.save();
-    const { id } = editedArticle;
 
     return res.json({
       status: 'success',
       data: {
-        post: {
-          id,
-          path: `/posts/${id}`
-        }
+        post: editedArticle
       }
     });
   })

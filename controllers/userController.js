@@ -23,7 +23,9 @@ exports.createAccountPost = [
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
-    const errorObject = Object.fromEntries(errors.array().map(e => [e.path, e.msg]));
+    const errorObject = Object.fromEntries(
+      errors.array().map((e) => [e.path, e.msg])
+    );
 
     if (!errors.isEmpty()) {
       res.status(400);
@@ -46,6 +48,8 @@ exports.createAccountPost = [
 
       const createdUser = await user.save();
       const jwt = issueJWT(createdUser);
+
+      // res.cookie('access_token', jwt.token, { maxAge: 1000 * 60 * 60 * 8, httpOnly: true });
 
       return res.json({
         status: 'success',
@@ -88,6 +92,8 @@ exports.loginPost = asyncHandler(async (req, res, next) => {
   }
 
   const jwt = issueJWT(user);
+
+  // res.cookie('access_token', jwt.token, { maxAge: 1000 * 60 * 60 * 8, httpOnly: true });
 
   return res.json({
     status: 'success',
