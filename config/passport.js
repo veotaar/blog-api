@@ -1,11 +1,12 @@
-const fs = require('fs');
-const path = require('path');
+// const fs = require('fs');
+// const path = require('path');
 const User = require('../models/user');
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 
-const pathToKey = path.join(__dirname, '..', 'id_rsa_pub.pem');
-const PUB_KEY = fs.readFileSync(pathToKey, 'utf8');
+// const pathToKey = path.join(__dirname, '..', 'id_rsa_pub.pem');
+// const PUB_KEY = fs.readFileSync(pathToKey, 'utf8');
+const PUB_KEY = Buffer.from(process.env.PUBLIC_KEY, 'base64').toString('ascii');
 
 // const extractJwtfromCookie = (req) => {
 //   let jwt = null;

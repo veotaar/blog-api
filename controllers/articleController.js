@@ -163,7 +163,7 @@ exports.updateArticlePut = [
       });
     }
 
-    const article = await Article.findById(articleId).populate('author', 'username').exec();
+    const article = await Article.findById(articleId).populate('author', 'username').populate('comments').exec();
     if (!article) {
       return res.status(404).json({
         status: 'fail',
