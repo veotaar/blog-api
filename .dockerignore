@@ -1,0 +1,6 @@
+node_modules
+node_modules/
+.env
+generateKeypair.js
+id_rsa_priv.pem
+id_rsa_pub.pem
