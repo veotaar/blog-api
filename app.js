@@ -27,6 +27,7 @@ const limiter = rateLimit({
 });
 
 const app = express();
+app.set('trust proxy', 1);
 
 require('./config/passport')(passport);
 app.use(passport.initialize());

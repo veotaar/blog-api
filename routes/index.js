@@ -29,4 +29,7 @@ router.delete('/comments/:commentid', passport.authenticate('jwt', { session: fa
 // TODO remove this
 router.delete('/nuke', passport.authenticate('jwt', { session: false }), restrictTo('admin'), articleController.testDeleteAllArticles);
 
+// Test
+router.get('/ip', (request, response) => response.send(request.ip));
+
 module.exports = router;
