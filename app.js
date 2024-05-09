@@ -6,8 +6,9 @@ const helmet = require('helmet');
 const mongoose = require('mongoose');
 const mongoSanitize = require('express-mongo-sanitize');
 // const cookieParser = require('cookie-parser');
+const { rateLimit } = require('express-rate-limit');
 
-mongoose.connect(process.env.DB_STRING);
+mongoose.connect(`${process.env.DB_STRING}?retryWrites=true&w=majority`);
 mongoose.set('toJSON', {
   virtuals: true,
   transform: (doc, converted) => {
@@ -17,6 +18,13 @@ mongoose.set('toJSON', {
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'mongodb connection error'));
+
+const limiter = rateLimit({
+  windowMs: 4 * 60 * 1000,
+  limit: 100,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false
+});
 
 const app = express();
 
@@ -28,6 +36,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cors());
 app.use(helmet());
 app.use(mongoSanitize());
+app.use(limiter);
 // app.use(cookieParser());
 
 // app.use((req, res, next) => {
