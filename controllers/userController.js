@@ -81,6 +81,15 @@ exports.loginPost = asyncHandler(async (req, res, next) => {
     });
   }
 
+  if (!user.roles.includes('admin')) {
+    return res.status(401).json({
+      status: 'fail',
+      data: {
+        message: 'you need to be an admin to login'
+      }
+    });
+  }
+
   const match = await bcrypt.compare(req.body.password, user.password);
   if (!match) {
     return res.status(401).json({

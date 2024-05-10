@@ -23,7 +23,15 @@ const limiter = rateLimit({
   windowMs: 4 * 60 * 1000,
   limit: 100,
   standardHeaders: 'draft-7',
-  legacyHeaders: false
+  legacyHeaders: false,
+  keyGenerator: (req, res) => {
+    if (!req.ip) {
+      return req.socket.remoteAddress;
+    }
+
+    // strip the port number from the IP address
+    return req.ip.replace(/:\d+[^:]*$/, '');
+  }
 });
 
 const app = express();
