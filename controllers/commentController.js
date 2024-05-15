@@ -39,7 +39,7 @@ exports.createCommentPost = [
     }
 
     // temporary solution for limiting comments
-    if (article.commentCount >= 20) {
+    if (article.commentCount >= 100) {
       return res.status(403).json({
         status: 'fail',
         data: {
