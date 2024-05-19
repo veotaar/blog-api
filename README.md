@@ -1,12 +1,16 @@
 # Blog API
 
-This project is a Node.js based back-end API for managing blog posts and comments. Built with express and MongoDB.
+This project is a Node.js based back-end API for managing my blog posts and comments. Built with express and MongoDB. Front-ends consuming this API:
+
+- CMS: [Repo](https://github.com/veotaar/blog-cms)
+- Public blog: [Repo](https://github.com/veotaar/blog-public), [Live](https://blog.ulus.uk)
 
 ## Tech Stack
 
 - Node.js
 - Express
 - MongoDB with Mongoose
+- Docker and Github Actions for deployment
 
 ## Features
 
@@ -23,7 +27,7 @@ This project is a Node.js based back-end API for managing blog posts and comment
 
 ## User Management
 
-- Bcrypt for Password Hashing and Verification
+- Bcrypt for password hashing and verification
 
 ## Server Settings and Moderation
 
