@@ -59,7 +59,7 @@ exports.createCommentPost = [
 
     article.comments.push(createdComment._id);
     article.$inc('commentCount', 1);
-    await article.save();
+    await article.save({ timestamps: false });
 
     return res.status(201).json({
       status: 'success',
@@ -113,7 +113,7 @@ exports.deleteComment = asyncHandler(async (req, res) => {
   article.$inc('commentCount', -1);
 
   await Promise.all([
-    article.save(),
+    article.save({ timestamps: false }),
     comment.deleteOne()
   ]);
 

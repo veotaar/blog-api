@@ -41,6 +41,6 @@ router.get('/settings/comments', settingsController.readCommentStatus);
 router.delete('/nuke', passport.authenticate('jwt', { session: false }), restrictTo('admin'), articleController.testDeleteAllArticles);
 
 // Test
-router.get('/ip', (request, response) => response.send(request.ip));
+// router.get('/ip', (request, response) => response.send(request.ip));
 
 module.exports = router;
