@@ -42,7 +42,15 @@ app.use(passport.initialize());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cors());
+app.use(cors({
+  origin: [
+    process.env.CMS_URL,
+    process.env.PUBLIC_URL,
+    'http://localhost:5173',
+    'http://localhost:5174'
+  ],
+  credentials: true
+}));
 app.use(helmet());
 app.use(mongoSanitize());
 app.use(limiter);
