@@ -3,3 +3,4 @@ node_modules
 generateKeypair.js
 id_rsa_priv.pem
 id_rsa_pub.pem
+.vscode
